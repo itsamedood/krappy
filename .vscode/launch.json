@@ -1,0 +1,15 @@
+{
+	"configurations": [
+		{
+			"name": "Run",
+			"type": "python",
+			"request": "launch",
+			"program": "src/main.py",
+			"pythonArgs": [
+				"-B",
+			],
+			"console": "integratedTerminal",
+			"justMyCode": true
+		}
+	]
+}
