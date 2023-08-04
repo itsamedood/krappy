@@ -1,5 +1,5 @@
 from enum import Enum
-from inquirer import Confirm, List, Path, Text, prompt
+from inquirer import Confirm, List, Text, prompt
 from os import getcwd, scandir
 from os.path import exists
 from out import KrappyError
@@ -61,5 +61,26 @@ class Prompt:
             if module_type is None: raise KrappyError("need module type", 1)
             else: options |= module_type
         else: options["module_type"] = "ES"
+
+        return options
+
+    def get_dpy_options(self) -> dict[str, str]:
+        options: dict[str, str] = {}
+
+        ...
+
+        return options
+
+    def get_jda_options(self) -> dict[str, str]:
+        options: dict[str, str] = {}
+
+        ...
+
+        return options
+
+    def get_pycord_options(self) -> dict[str, str]:
+        options: dict[str, str] = {}
+
+        ...
 
         return options
