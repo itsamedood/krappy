@@ -1,3 +1,4 @@
+from kyaml import KYAML
 from pkgMng import *
 from prompt import *
 from writer import *
@@ -89,9 +90,9 @@ CLIENT_ID={options["clientid"]}
 
     # Install packages and conclude.
     PkgMng(install_cmd, "discord.js", "glob", "dotenv" if not pm == JSPackageManager.BUN else None).install()
-    self.conclude()
+    self.conclude(path)
 
-  def conclude(self) -> None: print("Finished!")
+  def conclude(self, _path: str) -> None: return print("Successfully generated in %s!" %_path)
 
   def __gen_dpy_project(self) -> None: ...
   def __gen_jda_project(self) -> None: ...
