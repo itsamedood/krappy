@@ -1,26 +1,18 @@
 from os.path import exists
 
 
-class SourceCode:
-  """ Represents source code to be written to a specific file. """
-
-  def __init__(self, _code: str, _file: str) -> None:
-    self.code = _code.strip()
-    """ Actual code as a string (use 3 double quotes.) """
-
-    self.file = _file
-    """ File this code is for. """
-
-
 class Writer:
   """ Used for writing source code during generation. """
 
   @staticmethod
-  def write_src(_src: SourceCode):
-    file = _src.file
+  def write_src(_src: str, _file: str):
+    """
+    Writes `_src` (stripped) to `_file`.
 
-    mode = 'x' if not exists(file) else 'a'
-    with open(file, mode) as src_file: src_file.write(_src.code)
+    If the file doesn't exist, `mode` is set to `x`, else `a`.
+    """
+
+    with open(_file, 'x' if not exists(_file) else 'a') as src_file: src_file.write(_src.strip())
 
   @staticmethod
   def touch(_file: str) -> None:
