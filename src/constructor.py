@@ -50,6 +50,7 @@ options:
   pmi: {install_cmd}
 """, "%s/krappy.yaml" %path)
     Writer.write_src(krappy_yaml)
+    del krappy_yaml
 
     # `.env`.
     dotenv_code = SourceCode(f"""TOKEN={options["token"]}
@@ -57,6 +58,7 @@ CLIENT_ID={options["clientid"]}
 {f"GUILD_ID={options["guildid"]}" if "guildid" in options else ''}
 """, "%s/.env" %path)
     Writer.write_src(dotenv_code)
+    del dotenv_code
 
     # `package.json`.
     pkg_json = SourceCode(f"""{{
@@ -73,6 +75,7 @@ CLIENT_ID={options["clientid"]}
 }}
 """, "%s/package.json" %path)
     Writer.write_src(pkg_json)
+    del pkg_json
 
     # Make directories.
     mkdir("%s/src" %path)
@@ -80,22 +83,61 @@ CLIENT_ID={options["clientid"]}
     mkdir("%s/src/commands/misc" %path)
     mkdir("%s/src/events" %path)
 
-    Writer.touch(f"{path}/src/index.{lang}")
     Writer.touch(f"{path}/src/commands/misc/ping.{lang}")
     Writer.touch(f"{path}/src/events/ready.{lang}")
     Writer.touch(f"{path}/src/events/interactionCreate.{lang}")
 
-    if lang == "ts":  # TypeScript (🔥)
-      Writer.touch(f"{path}/src/bot.ts")
+    if pm == JSPackageManager.BUN:
+      # `tsconfig.json | jsconfig.json`.
+      langconfig_json = SourceCode(f"""{{
+    "compilerOptions": {{
+      "lib": ["ESNext"],
+      "module": "esnext",
+      "target": "esnext",
+      "moduleResolution": "bundler",
+      "moduleDetection": "force",
+      "allowImportingTsExtensions": true,
+      "noEmit": true,
+      "composite": true,
+      "strict": true,
+      "downlevelIteration": true,
+      "skipLibCheck": true,
+      "jsx": "react-jsx",
+      "allowSyntheticDefaultImports": true,
+      "forceConsistentCasingInFileNames": true,
+      "allowJs": true,
+      "types": [
+        "bun-types" // add Bun global
+      ]
+    }}
+  }}
+  """, f"{path}/{lang}config.json")
+      Writer.write_src(langconfig_json)
+      del langconfig_json
+
+    if lang == "ts":  # TypeScript (🔥)\
+      # `src/bot.ts`.
+      bot = SourceCode(f"""import {{ Client, ClientOptions, Collection }};
+""", "%s/src/bot.ts" %path)
+      Writer.write_src(bot)
+      del bot
+
+      # `src/index.ts`.
+      index = SourceCode(f"""import {{ Client, GatewayIntentBits }} from 'discord.js';
+""", "%s/src/bot.ts" %path)
+      Writer.write_src(index)
+      del index
 
     else:  # JavaScript (🗑️)
       ...
 
     # Install packages and conclude.
-    # PkgMng(install_cmd, "discord.js", "glob", "dotenv" if not pm == JSPackageManager.BUN else None).install()
+    PkgMng(path, install_cmd, "discord.js", "glob", "dotenv" if not pm == JSPackageManager.BUN else None).install()
     self.conclude(path)
 
-  def conclude(self, _path: str) -> None: return print("Successfully generated in %s!" %_path)
+  def conclude(self, _path: str) -> None:
+    print("Successfully generated in %s!" %_path)
+    exit(0)  # Imported from `prompt.py`.
 
   def __gen_dpy_project(self) -> None: print("To be supported...")
   def __gen_pycord_project(self) -> None: print("To be supported...")
@@ -106,6 +148,8 @@ CLIENT_ID={options["clientid"]}
 
 
 class CommandConstructor:
+  """ Holds functions for generating a command. """
+
   def __init__(self, _prompt: Prompt) -> None: self.lib, self.prompt = _prompt.get_library(), _prompt
 
   def gen_command(self) -> None:
@@ -129,6 +173,8 @@ class CommandConstructor:
 
 
 class EventConstructor:
+  """ Holds functions for generating a event. """
+
   def __init__(self, _prompt: Prompt) -> None: self.lib, self.prompt = _prompt.get_library(), _prompt
 
   def gen_event(self) -> None:

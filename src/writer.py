@@ -18,9 +18,8 @@ class Writer:
   @staticmethod
   def write_src(_src: SourceCode):
     file = _src.file
-    mode = 'a'
 
-    if not exists(file): mode = 'x'
+    mode = 'x' if not exists(file) else 'a'
     with open(file, mode) as src_file: src_file.write(_src.code)
 
   @staticmethod
