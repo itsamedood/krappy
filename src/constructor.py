@@ -5,21 +5,24 @@ from writer import *
 from os import mkdir
 
 
-class Constructor:
+class ProjectConstructor:
   """ Holds functions for generating a project. """
 
-  def __init__(self, _lib: DiscordLibrary) -> None: self.lib, self.prompt = _lib, Prompt()
+  def __init__(self, _prompt: Prompt) -> None: self.lib, self.prompt = _prompt.get_library(), _prompt
 
   def gen_project(self) -> None:
     match self.lib:
       case DiscordLibrary.DISCORD_JS: self.__gen_djs_project()
       case DiscordLibrary.DISCORD_PY: self.__gen_dpy_project()
-      case DiscordLibrary.JDA: self.__gen_jda_project()
       case DiscordLibrary.PYCORD: self.__gen_pycord_project()
+      case DiscordLibrary.JDA: self.__gen_jda_project()
+      case DiscordLibrary.CONCORD: self.__gen_concord_project()
+      case DiscordLibrary.DISCATSHARP: self.__gen_discatsharp_project()
+      case DiscordLibrary.DPP: self.__gen_dpp_project()
       case _: raise KrappyError("unknown library", 1)
 
   def __gen_djs_project(self) -> None:
-    pm = self.prompt.get_js_package_manager()
+    pm = PkgMng.get_js_package_manager()
     install_cmd = ''
 
     match pm:
@@ -89,11 +92,60 @@ CLIENT_ID={options["clientid"]}
       ...
 
     # Install packages and conclude.
-    PkgMng(install_cmd, "discord.js", "glob", "dotenv" if not pm == JSPackageManager.BUN else None).install()
+    # PkgMng(install_cmd, "discord.js", "glob", "dotenv" if not pm == JSPackageManager.BUN else None).install()
     self.conclude(path)
 
   def conclude(self, _path: str) -> None: return print("Successfully generated in %s!" %_path)
 
-  def __gen_dpy_project(self) -> None: ...
-  def __gen_jda_project(self) -> None: ...
-  def __gen_pycord_project(self) -> None: ...
+  def __gen_dpy_project(self) -> None: print("To be supported...")
+  def __gen_pycord_project(self) -> None: print("To be supported...")
+  def __gen_jda_project(self) -> None: print("To be supported...")
+  def __gen_concord_project(self) -> None: print("To be supported...")
+  def __gen_discatsharp_project(self) -> None: print("To be supported...")
+  def __gen_dpp_project(self) -> None: print("To be supported...")
+
+
+class CommandConstructor:
+  def __init__(self, _prompt: Prompt) -> None: self.lib, self.prompt = _prompt.get_library(), _prompt
+
+  def gen_command(self) -> None:
+    match self.lib:
+      case DiscordLibrary.DISCORD_JS: self.__gen_djs_command()
+      case DiscordLibrary.DISCORD_PY: self.__gen_dpy_command()
+      case DiscordLibrary.PYCORD: self.__gen_pycord_command()
+      case DiscordLibrary.JDA: self.__gen_jda_command()
+      case DiscordLibrary.CONCORD: self.__gen_concord_command()
+      case DiscordLibrary.DISCATSHARP: self.__gen_discatsharp_command()
+      case DiscordLibrary.DPP: self.__gen_dpp_command()
+      case _: raise KrappyError("unknown library", 1)
+
+  def __gen_djs_command(self) -> None: print("To be supported...")
+  def __gen_dpy_command(self) -> None: print("To be supported...")
+  def __gen_pycord_command(self) -> None: print("To be supported...")
+  def __gen_jda_command(self) -> None: print("To be supported...")
+  def __gen_concord_command(self) -> None: print("To be supported...")
+  def __gen_discatsharp_command(self) -> None: print("To be supported...")
+  def __gen_dpp_command(self) -> None: print("To be supported...")
+
+
+class EventConstructor:
+  def __init__(self, _prompt: Prompt) -> None: self.lib, self.prompt = _prompt.get_library(), _prompt
+
+  def gen_event(self) -> None:
+    match self.lib:
+      case DiscordLibrary.DISCORD_JS: self.__gen_djs_event()
+      case DiscordLibrary.DISCORD_PY: self.__gen_dpy_event()
+      case DiscordLibrary.PYCORD: self.__gen_pycord_event()
+      case DiscordLibrary.JDA: self.__gen_jda_event()
+      case DiscordLibrary.CONCORD: self.__gen_concord_event()
+      case DiscordLibrary.DISCATSHARP: self.__gen_discatsharp_event()
+      case DiscordLibrary.DPP: self.__gen_dpp_event()
+      case _: raise KrappyError("unknown library", 1)
+
+  def __gen_djs_event(self) -> None: print("To be supported...")
+  def __gen_dpy_event(self) -> None: print("To be supported...")
+  def __gen_pycord_event(self) -> None: print("To be supported...")
+  def __gen_jda_event(self) -> None: print("To be supported...")
+  def __gen_concord_event(self) -> None: print("To be supported...")
+  def __gen_discatsharp_event(self) -> None: print("To be supported...")
+  def __gen_dpp_event(self) -> None: print("To be supported...")

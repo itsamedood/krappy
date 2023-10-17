@@ -3,17 +3,25 @@ from inquirer import Confirm, List, Text, prompt
 from os import getcwd, scandir
 from os.path import exists
 from out import KrappyError
-from pkgMng import JSPackageManager
 from sys import exit
+
+
+class Action(Enum):
+  GEN_PROJECT = "Generate Project"
+  GEN_COMMAND = "Generate Command"
+  GEN_EVENT   = "Generate Event"
 
 
 class DiscordLibrary(Enum):
   """ Represents all supported libraries by Krappy. """
 
-  DISCORD_JS = "Discord.JS"
-  DISCORD_PY = "Discord.py"
-  JDA        = "Java Discord API (JDA)"
-  PYCORD     = "Pycord"
+  DISCORD_JS  = "Discord.JS"  # JavaScript / TypeScript.
+  DISCORD_PY  = "Discord.py"  # Python.
+  PYCORD      = "Pycord"  # Also Python.
+  JDA         = "Java Discord API (JDA)"  # Java.
+  CONCORD     = "Concord"  # C.
+  DISCATSHARP = "DisCatSharp (DCS)"  # C#.
+  DPP         = "DPP"  # C++.
 
 
 class Prompt:
@@ -21,12 +29,17 @@ class Prompt:
 
   def __init__(self) -> None: ...
 
+  def get_action(self) -> Action:
+    action: dict[str, str] | None = prompt([List("action", message="What do you want to do?", choices=[a.value for a in Action], carousel=True)])
+    if action is not None: return Action(action["action"])
+    else: exit(0)
+
   def get_library(self) -> DiscordLibrary:
     """ Gets the library user will use. """
 
     lib: dict[str, str] | None = prompt([List("lib", message="Which library are you using?", choices=[l.value for l in DiscordLibrary], carousel=True)])
     if lib is not None: return DiscordLibrary(lib["lib"])
-    else: exit(0)
+    else: raise KrappyError("need library", 1)
 
   def get_path(self, bot_name: str) -> dict[str, str]:
     """ Gets path for the project. """
@@ -77,13 +90,6 @@ class Prompt:
     if token is None: raise KrappyError("need token", 1)
     else: return token
 
-  def get_js_package_manager(self) -> JSPackageManager:
-    """ Gets desired package manager from the user. """
-
-    pm: dict[str, str] | None = prompt([List("pm", message="Package Manager", choices=[p.value for p in JSPackageManager], carousel=True)])
-    if pm is None: raise KrappyError("need package manager", 1)
-    else: return JSPackageManager(pm["pm"])
-
   def get_djs_options(self) -> dict[str, str]:
     """ Gets options for Discord.JS, JS or TS. """
 
@@ -116,6 +122,15 @@ class Prompt:
 
     return options
 
+  def get_pycord_options(self) -> dict[str, str]:
+    """ Gets options for Pycord. """
+
+    options: dict[str, str] = {}
+
+    ...
+
+    return options
+
   def get_jda_options(self) -> dict[str, str]:
     """ Gets options for Java Discord API. """
 
@@ -125,8 +140,26 @@ class Prompt:
 
     return options
 
-  def get_pycord_options(self) -> dict[str, str]:
-    """ Gets options for Pycord. """
+  def get_concord_options(self) -> dict[str, str]:
+    """ Gets options for Concord. """
+
+    options: dict[str, str] = {}
+
+    ...
+
+    return options
+
+  def get_discatsharp_options(self) -> dict[str, str]:
+    """ Gets options for DisCatSharp. """
+
+    options: dict[str, str] = {}
+
+    ...
+
+    return options
+
+  def get_dpp_options(self) -> dict[str, str]:
+    """ Gets options for DPP. """
 
     options: dict[str, str] = {}
 
