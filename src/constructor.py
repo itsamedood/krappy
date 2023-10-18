@@ -66,7 +66,7 @@ CLIENT_ID={options["clientid"]}
   "description": "Generated with Krappy :)",
   "main": "src/index.{lang}",
   "scripts": {{
-    "test": "echo \\"Error: no test specified\\" && exit 1"
+    {""""test": "echo \\"Error: no test specified\\" && exit 1\"""" if lang == "js" else """"start": "npx ts-node src/index.ts",\n"dev": "npx ts-node-dev@2.0.0-0 src/index.ts\""""}
   }},
   "keywords": [],
   "author": "",
@@ -230,7 +230,7 @@ export default class Bot extends Client {{
   }}
 
   public async registerCommands(): Promise<void> {{
-    const cmdFiles = await glob(`${{__dirname}}/commands/**/*.ts`);
+    const cmdFiles = await glob(`${{__dirname}}/commands/**/*.ts`, {{ absolute: true }});
 
     for (const file of cmdFiles) {{
       const {{ default: Command }} = await import(file);
@@ -263,7 +263,7 @@ export default class Bot extends Client {{
   }}
 
   public async registerEvents(): Promise<void> {{
-    const eventFiles = await glob(`${{__dirname}}/events/**/*.ts`);
+    const eventFiles = await glob(`${{__dirname}}/events/**/*.ts`, {{ absolute: true }});
 
     for (const file of eventFiles) {{
       const {{ default: Event }} = await import(file);
@@ -284,7 +284,7 @@ export default class Bot extends Client {{
 
       # `src/index.ts`.
       Writer.write_src(f"""import {{ GatewayIntentBits, Partials }} from 'discord.js';
-import Bot from './bot';
+{"import Bot from './bot';" if pm == JSPackageManager.BUN else "import { config } from 'dotenv';\nimport Bot from './bot';\nconfig();"}
 
 const client = new Bot({{
   intents: {f"{"[]" if not len(intents) > 0 else f"""[\n    {',\n    '.join(["GatewayIntentBits.%s" %i for i in intents]) if "All" not in intents else ',\n    '.join(["GatewayIntentBits.%s" %i for i in [i.value for i in Intent][1:]])}\n  ]"""}"},
@@ -300,7 +300,7 @@ const client = new Bot({{
 
       # `src/events/ready.ts`
       Writer.write_src(f"""import Event from '../types/event';
-import Bot from '../event';
+import Bot from '../bot';
 
 export default class ReadyEvent extends Event {{
   constructor() {{
@@ -344,7 +344,24 @@ export default class InteractionCreateEvent extends Event {{
     if (interaction.isChatInputCommand()) {{
       // vvv Comment out this line if you want commands to run in DMs.
       if (interaction.channel?.isDMBased()) return;
+
+      const command: Command | undefined = client.commands.get(interaction.commandName);
+      if (!command) return;
+
+      if (!interaction.memberPermissions?.has(command.userPermissions))
+        return await interaction.reply({{ content: 'You don\\'t have permission to use this command!', ephemeral: true }});
+
+      try {{
+        return await command.execute(interaction, client);
+      }} catch (err) {{
+        await interaction.reply({{ content: `Error while executing command:\\n\\`\\`\\`ts\\n${{err}}\\n\\`\\`\\``, ephemeral: true }});
+        return console.error(err);
+      }}
     }}
+
+    else if (interaction.isButton()) {{ }}
+    else if (interaction.isAnySelectMenu()) {{ }}
+    else if (interaction.isModalSubmit()) {{ }}
   }}
 }}
 """, "%s/src/events/interactionCreate.ts" %path)
