@@ -8,5 +8,3 @@ class KYAML:
     if exists(path):
       with open(path, 'r') as krappyyaml: self.data = load(krappyyaml, FullLoader)
     else: self.data = None
-
-    print(self.data)

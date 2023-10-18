@@ -1,5 +1,5 @@
-from enum import Enum
-from inquirer import Confirm, List, Text, prompt
+from intents import *  # Also imports `Enum`.
+from inquirer import Checkbox, Confirm, List, Text, prompt
 from os import getcwd, scandir
 from os.path import exists
 from out import KrappyError
@@ -82,6 +82,21 @@ class Prompt:
       else: gen_options |= guildid
 
     return gen_options
+
+  def get_intents_and_partials(self) -> dict[str, list[str]]:
+    """ Gets the intents and partials for the bot. """
+
+    is_and_ps: dict[str, list[str]] = {}
+
+    intents: dict[str, list[str]] | None = prompt([Checkbox("intents", message="Intents", choices=[i.value for i in Intent], default=[Intent.GUILDS.value], carousel=True)])
+    if intents is None: raise KrappyError("need intents", 1)
+    else: is_and_ps |= intents
+
+    partials: dict[str, list[str]] | None = prompt([Checkbox("partials", message="Partials", choices=[p.value for p in Partial], carousel=True)])
+    if partials is None: raise KrappyError("need partials", 1)
+    else: is_and_ps |= partials
+
+    return is_and_ps
 
   def get_token(self) -> dict[str, str]:
     """ Gets the token for the bot. """
