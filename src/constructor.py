@@ -1,8 +1,9 @@
-from kyaml import KYAML
 from pkgMng import *
 from prompt import *
 from writer import *
+from kyaml import KYAML
 from os import mkdir
+from re import match
 
 
 class ProjectConstructor:
@@ -50,7 +51,7 @@ options:
   name: {options["name"]}
   globalcmds: {options["globalcmds"]}
   path: {path}
-  pmi: {install_cmd}
+  pm: {pm.value}
 """, "%s/krappy.yaml" %path)
 
     # `.env`.
@@ -80,6 +81,10 @@ CLIENT_ID={options["clientid"]}
     mkdir("%s/src/commands/misc" %path)
     mkdir("%s/src/events" %path)
     mkdir("%s/src/types" %path)
+    mkdir("%s/src/components" %path)
+    mkdir("%s/src/components/buttons" %path)
+    mkdir("%s/src/components/menus" %path)
+    mkdir("%s/src/components/modals" %path)
 
     if pm == JSPackageManager.BUN:
       # `tsconfig.json | jsconfig.json`.
@@ -107,6 +112,30 @@ CLIENT_ID={options["clientid"]}
 }}""", f"{path}/{lang}config.json")
 
     if lang == "ts":  # TypeScript (🔥)
+      # `src/types/button.ts`
+      Writer.write_src(f"""import {{ ButtonInteraction }} from 'discord.js';
+import Bot from '../bot';
+
+export interface ButtonArgs {{
+  customId: string;
+}}
+
+/**
+ * Base class for buttons.
+ */
+export default abstract class Button {{
+  private _customId: string;
+
+  constructor(args: ButtonArgs) {{
+    this._customId = args.customId;
+  }}
+
+  get customId(): string {{ return this._customId; }}
+
+  public abstract execute(interaction: ButtonInteraction, client: Bot): any;
+}}
+""", "%s/src/types/button.ts" %path)
+
       # `src/types/command.ts`
       Writer.write_src(f"""import {{ ChatInputCommandInteraction }} from 'discord.js';
 import Bot from '../bot';
@@ -206,22 +235,70 @@ export default abstract class Event {{
 }}
 """, "%s/src/types/event.ts" %path)
 
+      # `src/types/modal.ts`
+      Writer.write_src(f"""import {{ ModalSubmitInteraction }} from 'discord.js';
+import Bot from '../bot';
+
+export interface ModalArgs {{
+  customId: string;
+}}
+
+/**
+ * Base class for modals.
+ */
+export default abstract class Modal {{
+  private _customId: string;
+
+  constructor(args: ModalArgs) {{
+    this._customId = args.customId;
+  }}
+
+  get customId(): string {{ return this._customId; }}
+
+  public abstract execute(interaction: ModalSubmitInteraction, client: Bot): any;
+}}
+""", "%s/src/types/modal.ts" %path)
+
+      # `src/types/selectMenu.ts`
+      Writer.write_src(f"""import {{ AnySelectMenuInteraction }} from 'discord.js';
+import Bot from '../bot';
+
+export interface SelectMenuArgs {{
+  customId: string;
+}}
+
+/**
+ * Base class for select menus.
+ */
+export default abstract class SelectMenu {{
+  private _customId: string;
+
+  constructor(args: SelectMenuArgs) {{
+    this._customId = args.customId;
+  }}
+
+  get customId(): string {{ return this._customId; }}
+
+  public abstract execute(interaction: AnySelectMenuInteraction, client: Bot): any;
+}}
+""", "%s/src/types/selectMenu.ts" %path)
+
       # `src/bot.ts`.
       Writer.write_src(f"""import {{ Client, ClientOptions, Collection }} from 'discord.js';
 import {{ Routes }} from 'discord-api-types/v9';
 import {{ REST }} from '@discordjs/rest';
 import {{ glob }} from 'glob';
 import Command, {{ CommandData }} from './types/command';
-// import Button from './types/button';
+import Button from './types/button';
 import Event from './types/event';
-// import Modal from './types/modal';
-// import SelectMenu from './types/selectMenu';
+import Modal from './types/modal';
+import SelectMenu from './types/selectMenu';
 
 export default class Bot extends Client {{
   public commands = new Collection<string, Command>();
-  // public buttons = new Collection<string, Button>();
-  // public selectMenus = new Collection<string, SelectMenu>();
-  // public modals = new Collection<string, Modal>();
+  public buttons = new Collection<string, Button>();
+  public selectMenus = new Collection<string, SelectMenu>();
+  public modals = new Collection<string, Modal>();
 
   private _cmdJSONArray: CommandData[] = [];
 
@@ -276,9 +353,41 @@ export default class Bot extends Client {{
     }}
   }}
 
-  // public async registerButtons(): Promise<void> {{ }}
-  // public async registerSelectMenus(): Promise<void> {{ }}
-  // public async registerModals(): Promise<void> {{ }}
+  public async registerButtons(): Promise<void> {{
+    const buttonFiles = await glob(`${{__dirname}}/components/buttons/**/*.ts`, {{ absolute: true }});
+
+    for (const file of buttonFiles) {{
+      const {{ default: Button }} = await import(file);
+      const button: Button = new Button();
+
+      this.buttons.set(button.customId, button);
+      console.log(`Loaded ${{button.customId}} button!`);
+    }}
+  }}
+
+  public async registerSelectMenus(): Promise<void> {{
+    const selectMenuFiles = await glob(`${{__dirname}}/components/menus/**/*.ts`, {{ absolute: true }});
+
+    for (const file of selectMenuFiles) {{
+      const {{ default: SelectMenu }} = await import(file);
+      const selectMenu: SelectMenu = new SelectMenu();
+
+      this.selectMenus.set(selectMenu.customId, selectMenu);
+      console.log(`Loaded ${{selectMenu.customId}} select menu!`);
+    }}
+  }}
+
+  public async registerModals(): Promise<void> {{
+    const modalFiles = await glob(`${{__dirname}}/components/modals/**/*.ts`, {{ absolute: true }});
+
+    for (const file of modalFiles) {{
+      const {{ default: Modal }} = await import(file);
+      const modal: Modal = new Modal();
+
+      this.modals.set(modal.customId, modal);
+      console.log(`Loaded ${{modal.customId}} modal!`);
+    }}
+  }}
 }}
 """, "%s/src/bot.ts" %path)
 
@@ -292,6 +401,9 @@ const client = new Bot({{
 }});
 
 (async (): Promise<void> => {{
+  await client.registerButtons();
+  await client.registerModals();
+  await client.registerSelectMenus();
   await client.registerEvents();
   await client.registerCommands();
   await client.login(process.env['TOKEN'] ?? '');
@@ -423,7 +535,47 @@ class CommandConstructor:
       case DiscordLibrary.DPP: self.__gen_dpp_command()
       case _: raise KrappyError("unknown library", 1)
 
-  def __gen_djs_command(self) -> None: print("To be supported...")
+  def __gen_djs_command(self) -> None:
+    kyaml = KYAML(getcwd()).data
+    options = kyaml["options"]
+    path, language = options["path"], options["language"]
+
+    cmdoptions = self.prompt.get_command_options()
+    cn, cc = cmdoptions["cmdname"], cmdoptions["cmdcategory"]
+    if not match(r"^[a-zA-Z][a-zA-Z]*$", cn): raise KrappyError("invalid command name: '%s'" %cn, 1)
+    if not match(r"^[a-zA-Z][a-zA-Z]*$", cc): raise KrappyError("invalid command category: '%s'" %cc, 1)
+
+    cmdname = f"{cn[0].upper()}{cn[1:]}Command"
+    cmdfile = f"{cn[0].lower()}{cn[1:]}"
+    cmdpath = f"{path}/src/commands/{cc}/{cmdfile}.{language}"
+
+    if exists(cmdpath): raise KrappyError("%s command already exists" %cmdname, 1)
+    if not exists(f"{path}/src/commands/{cc}"): raise KrappyError("'%s' not a subdir of 'src/commands'" %cc, 1)
+
+    if language == "ts": Writer.write_src(f"""import {{ ChatInputCommandInteraction }} from 'discord.js';
+import Bot from '../../bot';
+import Command from '../../types/command';
+
+export default class {cmdname} extends Command {{
+  constructor() {{
+    super({{
+      data: {{
+        name: '{cmdfile}',
+        description: 'Generated by Krappy!'
+      }},
+      category: '{cc.upper()}'
+    }});
+  }}
+
+  public async execute(interaction: ChatInputCommandInteraction, client: Bot) {{
+    return await interaction.reply({{ content: 'Works!' }});
+  }}
+}}
+""", cmdpath)  # TypeScript
+
+    else: ...  # JavaScript.
+
+
   def __gen_dpy_command(self) -> None: print("To be supported...")
   def __gen_pycord_command(self) -> None: print("To be supported...")
   def __gen_jda_command(self) -> None: print("To be supported...")

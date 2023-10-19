@@ -181,3 +181,18 @@ class Prompt:
     ...
 
     return options
+
+  def get_command_options(self) -> dict[str, str]:
+    cmdoptions: dict[str, str] = {}
+
+    cmdname: dict[str, str] | None = prompt([Text("cmdname", message="Command name")])
+    if cmdname is None: raise KrappyError("need command name", 1)
+    else: cmdoptions |= cmdname
+    del cmdname
+
+    cmdcategory: dict[str, str] | None = prompt([Text("cmdcategory", message="Command category")])
+    if cmdcategory is None: raise KrappyError("need command category", 1)
+    else: cmdoptions |= cmdcategory
+    del cmdcategory
+
+    return cmdoptions
