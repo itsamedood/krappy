@@ -9,7 +9,9 @@ from re import match
 class ProjectConstructor:
   """ Holds functions for generating a project. """
 
-  def __init__(self, _prompt: Prompt) -> None: self.lib, self.prompt = _prompt.get_library(), _prompt
+  def __init__(self) -> None:
+    self.prompt = ProjectPrompt()
+    self.lib = self.prompt.get_library()
 
   def gen_project(self) -> None:
     match self.lib:
@@ -522,10 +524,10 @@ export default class PingCommand extends Command {{
 class CommandConstructor:
   """ Holds functions for generating a command. """
 
-  def __init__(self, _prompt: Prompt) -> None: self.lib, self.prompt = _prompt.get_library(), _prompt
+  def __init__(self) -> None: self.prompt = CommandPrompt()
 
   def gen_command(self) -> None:
-    match self.lib:
+    match self.prompt.get_library():
       case DiscordLibrary.DISCORD_JS: self.__gen_djs_command()
       case DiscordLibrary.DISCORD_PY: self.__gen_dpy_command()
       case DiscordLibrary.PYCORD: self.__gen_pycord_command()
@@ -575,7 +577,6 @@ export default class {cmdname} extends Command {{
 
     else: ...  # JavaScript.
 
-
   def __gen_dpy_command(self) -> None: print("To be supported...")
   def __gen_pycord_command(self) -> None: print("To be supported...")
   def __gen_jda_command(self) -> None: print("To be supported...")
@@ -587,10 +588,11 @@ export default class {cmdname} extends Command {{
 class EventConstructor:
   """ Holds functions for generating a event. """
 
-  def __init__(self, _prompt: Prompt) -> None: self.lib, self.prompt = _prompt.get_library(), _prompt
+  def __init__(self) -> None:
+    self.prompt = EventPrompt()
 
   def gen_event(self) -> None:
-    match self.lib:
+    match self.prompt.get_library():
       case DiscordLibrary.DISCORD_JS: self.__gen_djs_event()
       case DiscordLibrary.DISCORD_PY: self.__gen_dpy_event()
       case DiscordLibrary.PYCORD: self.__gen_pycord_event()
@@ -600,7 +602,22 @@ class EventConstructor:
       case DiscordLibrary.DPP: self.__gen_dpp_event()
       case _: raise KrappyError("unknown library", 1)
 
-  def __gen_djs_event(self) -> None: print("To be supported...")
+  def __gen_djs_event(self) -> None:
+    kyaml = KYAML(getcwd()).data
+    options = kyaml["options"]
+    path, language = options["path"], options["language"]
+
+    eventoptions = self.prompt.get_event_options()
+    en, eventonce = eventoptions["eventname"], eventoptions["eventonce"]
+    if not type(en) == str or not type(eventonce) == bool: raise KrappyError("eventname should be of type 'str' and eventonce should be of type 'bool'", 1)
+    if not match(r"^[a-zA-Z][a-zA-Z]*$", en): raise KrappyError("invalid event name: '%s'" %en, 1)
+
+    eventname = f"{en[0].upper()}{en[1:]}Event"
+    eventfile = f"{en[0].lower()}{en[1:]}"
+    eventpath = f"{path}/src/events/{eventfile}.{language}"
+
+    ...  # Write code here tbh
+
   def __gen_dpy_event(self) -> None: print("To be supported...")
   def __gen_pycord_event(self) -> None: print("To be supported...")
   def __gen_jda_event(self) -> None: print("To be supported...")

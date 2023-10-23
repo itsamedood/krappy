@@ -1,13 +1,12 @@
 from constructor import CommandConstructor, EventConstructor, ProjectConstructor
-from prompt import Action, Prompt
+from prompt import Action, ActionChoice
 
 
 if __name__ == "__main__":
   try:
-    p = Prompt()
-    match p.get_action():
-      case Action.GEN_PROJECT: ProjectConstructor(p).gen_project()
-      case Action.GEN_COMMAND: CommandConstructor(p).gen_command()
-      case Action.GEN_EVENT: EventConstructor(p).gen_event()
+    match Action.get_action():
+      case ActionChoice.GEN_PROJECT: ProjectConstructor().gen_project()
+      case ActionChoice.GEN_COMMAND: CommandConstructor().gen_command()
+      case ActionChoice.GEN_EVENT: EventConstructor().gen_event()
 
   except KeyboardInterrupt: ...
