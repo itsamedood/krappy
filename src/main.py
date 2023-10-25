@@ -1,5 +1,7 @@
-from constructor import CommandConstructor, EventConstructor, ProjectConstructor
-from prompt import Action, ActionChoice
+from constructors.commandConstructor import CommandConstructor
+from constructors.eventConstructor import EventConstructor
+from constructors.projectConstructor import ProjectConstructor
+from prompts.promptTypes import Action, ActionChoice
 
 
 if __name__ == "__main__":

@@ -1,35 +1,9 @@
-from intents import *  # Also imports `Enum`.
+from intents import *
 from inquirer import Checkbox, Confirm, List, Text, prompt
 from os import getcwd, scandir
 from os.path import exists
 from out import KrappyError
-from sys import exit
-
-
-class ActionChoice(Enum):
-  GEN_PROJECT = "Generate Project"
-  GEN_COMMAND = "Generate Command"
-  GEN_EVENT   = "Generate Event"
-
-
-class Action:
-  @staticmethod
-  def get_action() -> ActionChoice:
-    action: dict[str, str] | None = prompt([List("action", message="What do you want to do?", choices=[a.value for a in ActionChoice], carousel=True)])
-    if action is not None: return ActionChoice(action["action"])
-    else: exit(0)
-
-
-class DiscordLibrary(Enum):
-  """ Represents all supported libraries by Krappy. """
-
-  DISCORD_JS  = "Discord.JS"  # JavaScript / TypeScript.
-  DISCORD_PY  = "Discord.py"  # Python.
-  PYCORD      = "Pycord"  # Also Python.
-  JDA         = "Java Discord API (JDA)"  # Java.
-  CONCORD     = "Concord"  # C.
-  DISCATSHARP = "DisCatSharp (DCS)"  # C#.
-  DPP         = "DPP"  # C++.
+from prompts.promptTypes import DiscordLibrary
 
 
 class ProjectPrompt:
@@ -190,55 +164,3 @@ class ProjectPrompt:
     ...
 
     return options
-
-
-class CommandPrompt:
-  def __init__(self) -> None: ...
-
-  def get_library(self) -> DiscordLibrary:
-    """ Gets the library user will use. """
-
-    lib: dict[str, str] | None = prompt([List("lib", message="Which library are you using?", choices=[l.value for l in DiscordLibrary], carousel=True)])
-    if lib is None: raise KrappyError("need library", 1)
-    else: return DiscordLibrary(lib["lib"])
-
-  def get_command_options(self) -> dict[str, str]:
-    cmdoptions: dict[str, str] = {}
-
-    cmdname: dict[str, str] | None = prompt([Text("cmdname", message="Command name")])
-    if cmdname is None: raise KrappyError("need command name", 1)
-    else: cmdoptions |= cmdname
-    del cmdname
-
-    cmdcategory: dict[str, str] | None = prompt([Text("cmdcategory", message="Command category")])
-    if cmdcategory is None: raise KrappyError("need command category", 1)
-    else: cmdoptions |= cmdcategory
-    del cmdcategory
-
-    return cmdoptions
-
-
-class EventPrompt:
-  def __init__(self) -> None: ...
-
-  def get_library(self) -> DiscordLibrary:
-    """ Gets the library user will use. """
-
-    lib: dict[str, str] | None = prompt([List("lib", message="Which library are you using?", choices=[l.value for l in DiscordLibrary], carousel=True)])
-    if lib is None: raise KrappyError("need library", 1)
-    else: return DiscordLibrary(lib["lib"])
-
-  def get_event_options(self) -> dict[str, str | bool]:
-    eventoptions: dict[str, str | bool] = {}
-
-    eventname: dict[str, str] | None = prompt([Text("eventname", message="Event name")])
-    if eventname is None: raise KrappyError("need event name", 1)
-    else: eventoptions |= eventname
-    del eventname
-
-    eventonce: dict[str, bool] | None = prompt([Confirm("eventonce", message="Event once?", default=False)])
-    if eventonce is None: raise KrappyError("need event once", 1)
-    else: eventoptions |= eventonce
-    del eventonce
-
-    return eventoptions
