@@ -4,6 +4,7 @@ from os import mkdir
 from pkgMng import JSPackageManager, PkgMng
 from prompts.projectPrompt import ProjectPrompt
 from prompts.promptTypes import DiscordLibrary
+from sys import exit
 from writer import Writer
 
 
@@ -83,7 +84,6 @@ CLIENT_ID={options["clientid"]}
     mkdir("%s/src/commands" %path)
     mkdir("%s/src/commands/misc" %path)
     mkdir("%s/src/events" %path)
-    mkdir("%s/src/types" %path)
     mkdir("%s/src/components" %path)
     mkdir("%s/src/components/buttons" %path)
     mkdir("%s/src/components/menus" %path)
@@ -115,6 +115,8 @@ CLIENT_ID={options["clientid"]}
 }}""", f"{path}/{lang}config.json")
 
     if lang == "ts":  # TypeScript (🔥)
+      mkdir("%s/src/types" %path)
+
       # `src/types/button.ts`
       Writer.write_src(f"""import {{ ButtonInteraction }} from 'discord.js';
 import Bot from '../bot';
@@ -504,15 +506,35 @@ export default class PingCommand extends Command {{
 """, "%s/src/commands/misc/ping.ts" %path)
 
     else:  # JavaScript (🗑️)
-      ...
+      mkdir("%s/src/functions" %path)
+      module_type = str(options["module_type"])
+
+      if module_type == "ESM":  # (🔥)
+        print("To be supported..."); exit(0)
+
+      else:  # CommonJS (require/exports / 🗑️)
+        # `src/index.js`
+        Writer.write_src(f"""require('dotenv').config();
+const {{ Client, Collection, GatewayIntentBits, Partials }} = require('discord.js');
+const fs = require('fs');
+
+const client = new Client({{
+  intents: {"[]" if len(intents) < 1 else "[GatewayIntentBits.%s]" %intents[0] if len(intents) == 1 else f"[\n    {",\n    ".join(["GatewayIntentBits.%s" %i for i in intents] if not "All" in intents else ["GatewayIntentBits.%s" %i for i in [i.value for i in Intent][1:]])}\n  ]"},
+  partials: {"[]" if len(partials) < 1 else "[Partials.%s]" %partials[0] if len(partials) == 1 else f"[\n    {"\n,    ".join(["Partials.%s" %p for p in partials] if not "All" in partials else ["Partials.%s" %p for p in [p.value for p in Partial][1:]])}]"}
+}});
+
+(async () => {{
+  client.login(process.env['TOKEN']);
+}})();
+""", "%s/src/index.js" %path)
 
     # Install packages and conclude.
-    PkgMng(path, install_cmd, "discord.js", "glob", "dotenv" if not pm == JSPackageManager.BUN else None).install()
+    PkgMng(path, install_cmd, "discord.js", "glob" if not options["module_type"] == "CommonJS" else None, "dotenv" if not pm == JSPackageManager.BUN else None).install()
     self.conclude(path)
 
   def conclude(self, _path: str) -> None:
     print("Successfully generated in %s!" %_path)
-    exit(0)  # Imported from `prompt.py`.
+    exit(0)
 
   def __gen_dpy_project(self) -> None: print("To be supported...")
   def __gen_pycord_project(self) -> None: print("To be supported...")

@@ -27,7 +27,7 @@
 | [DisCatSharp](https://docs.dcs.aitsys.dev) | ❌ |
 | [DPP](https://dpp.dev) | ❌ |
 ### NOTE: This project is still in development, so this list will be updated as development goes on!
-
+### NOTE: Discord.JS generation supports both TypeScript and JavaScript. If you use JS, you can choose between CJS (CommonJS) and ESM modules.
 ---
 
 # How do I install it?
