@@ -513,17 +513,67 @@ export default class PingCommand extends Command {{
         print("To be supported..."); exit(0)
 
       else:  # CommonJS (require/exports / 🗑️)
+        # `src/functions/handleCommands.js`
+        Writer.write_src(f"""const {{ REST }} = require('@discordjs/rest');
+const {{ Routes }} = require('discord-api-types/v9');
+const {{ readdirSync }} = require('fs');
+
+module.exports = (client) => {{
+  client.handleCommands = async () => {{
+    const commandArray = []
+    const commandFolders = readdirSync('./src/commands');
+
+    for (const folder of commandFolders) {{
+      const commandFiles = readdirSync(`./src/commands/${{folder}}`)
+        .filter((file) => file.endsWith('.js'));
+
+      for (const file of commandFiles) {{
+        const command = require(`../../commands/${{folder}}/${{file}}`);
+        client.commands.set(command.data.name, command);
+        commandArray.push(command.data.toJSON());
+
+        console.log(`Loaded ${{command.data.name}} command!`);
+      }}
+    }}
+
+    const rest = new REST({{ version: '9' }}).setToken(process.env['TOKEN']);
+    try {{
+      await rest.put(Routes.{"applicationGuildCommands(process.env['CLIENT_ID'], process.env['GUILD_ID'])" if "guildId" in options else "applicationCommands(process.env['CLIENT_ID'])"}, {{
+        body: commandArray
+      }});
+
+    }} catch (error) {{
+      console.error(error);
+    }}
+  }};
+}};
+""", "%s/src/functions/handleCommands.js" %path)
+
         # `src/index.js`
         Writer.write_src(f"""require('dotenv').config();
 const {{ Client, Collection, GatewayIntentBits, Partials }} = require('discord.js');
-const fs = require('fs');
+const {{ readdirSync }} = require('fs');
 
 const client = new Client({{
   intents: {"[]" if len(intents) < 1 else "[GatewayIntentBits.%s]" %intents[0] if len(intents) == 1 else f"[\n    {",\n    ".join(["GatewayIntentBits.%s" %i for i in intents] if not "All" in intents else ["GatewayIntentBits.%s" %i for i in [i.value for i in Intent][1:]])}\n  ]"},
-  partials: {"[]" if len(partials) < 1 else "[Partials.%s]" %partials[0] if len(partials) == 1 else f"[\n    {"\n,    ".join(["Partials.%s" %p for p in partials] if not "All" in partials else ["Partials.%s" %p for p in [p.value for p in Partial][1:]])}]"}
+  partials: {"[]" if len(partials) < 1 else "[Partials.%s]" %partials[0] if len(partials) == 1 else f"[\n    {",\n    ".join(["Partials.%s" %p for p in partials] if not "All" in partials else ["Partials.%s" %p for p in [p.value for p in Partial][1:]])}\n  ]"}
 }});
 
+// You can assign properties to the client instance like so:
+client.commands = new Collection(); // Holds your bots application commands.
+
+const functionFiles = readdirSync(`./src/functions`)
+  .filter((file) => file.endsWith('.js'));
+
+for (const file of functionFiles)
+  require(`./functions/${{file}}`)(client);
+
 (async () => {{
+  // client.handleButtons();
+  // client.handleSelectMenus();
+  // client.handleModals();
+  // client.handleEvents();
+  // client.handleCommands();
   client.login(process.env['TOKEN']);
 }})();
 """, "%s/src/index.js" %path)
