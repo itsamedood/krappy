@@ -549,6 +549,68 @@ module.exports = (client) => {{
 }};
 """, "%s/src/functions/handleCommands.js" %path)
 
+        # `src//functions/handleEvents.js`
+        Writer.write_src(f"""const {{ REST }} = require('@discordjs/rest');
+const {{ Routes }} = require('discord-api-types/v9');
+const {{ readdirSync }} = require('fs');
+
+module.exports = (client) => {{
+  client.handleEvents = async () => {{
+    const eventFiles = readdirSync('./src/events');
+
+    for (const file of eventFiles) {{
+      const event = require(`../events/${{file}}`);
+
+      event.once ? client.once(event.name, (...args) => event.execute(...args, client))
+      : client.on(event.name, (...args) => event.execute(...args, client));
+    }}
+  }}
+}};
+""", "%s/src/functions/handleEvents.js" %path)
+
+        # `src/events/ready.js`
+        Writer.write_src(f"""module.exports = {{
+  name: 'ready',
+  once: true,
+  async execute(client) {{
+    console.log(`Successfully logged in as ${{client.user.tag}}.`);
+  }}
+}};
+""", "%s/src/events/ready.js" %path)
+
+        # `src/events/interactionCreate.js`
+        Writer.write_src(f"""module.exports = {{
+  name: 'interactionCreate',
+  async execute(interaction, client) {{
+    if (interaction.isChatInputCommand()) {{
+      const command = client.commands.get(interaction.commandName);
+      if (!command) return;
+
+      try {{
+        await command.execute(interaction, client);
+      }} catch (error) {{
+        console.error(error);
+        await interaction.reply({{ content: `Error while executing command: \\`\\`\\`js\\n${{error.message}}\\n\\`\\`\\``, ephemeral: true }});
+      }}
+    }}
+  }}
+}};
+""", "%s/src/events/interactionCreate.js" %path)
+
+        # `src/commands/misc/ping.js`
+        Writer.write_src(f"""const {{ SlashCommandBuilder }} = require("discord.js");
+
+module.exports = {{
+  data: new SlashCommandBuilder()
+    .setName('ping')
+    .setDescription('Pong!'),
+
+  async execute(interaction, client) {{
+    return await interaction.reply({{ content: 'Pong!' }});
+  }}
+}};
+""", "%s/src/commands/misc/ping.js" %path)
+
         # `src/index.js`
         Writer.write_src(f"""require('dotenv').config();
 const {{ Client, Collection, GatewayIntentBits, Partials }} = require('discord.js');
@@ -572,8 +634,8 @@ for (const file of functionFiles)
   // client.handleButtons();
   // client.handleSelectMenus();
   // client.handleModals();
-  // client.handleEvents();
-  // client.handleCommands();
+  client.handleEvents();
+  client.handleCommands();
   client.login(process.env['TOKEN']);
 }})();
 """, "%s/src/index.js" %path)
