@@ -29,6 +29,7 @@ class EventConstructor:
     kyaml = KYAML(getcwd()).data
     options = kyaml["options"]
     path, language = options["path"], options["language"]
+    module_type = options["module_type"] if "module_type" in options else None
 
     eventoptions = self.prompt.get_event_options()
     en, eventonce = eventoptions["eventname"], eventoptions["eventonce"]
@@ -40,7 +41,8 @@ class EventConstructor:
     eventpath = f"{path}/src/events/{eventfile}.{language}"
 
     if exists(eventpath): raise KrappyError("%s event already exists" %eventname, 1)
-    if language == "ts": Writer.write_src(f"""import Event from '../types/event';
+    if language == "ts":  # TypeScript.
+      Writer.write_src(f"""import Event from '../types/event';
 import Bot from '../bot';
 
 export default class {eventname} extends Event {{
@@ -55,6 +57,15 @@ export default class {eventname} extends Event {{
     return console.log(`{eventfile} event triggered.`);
   }}
 }}
+""", eventpath)
+    else:  # JavaScript.
+      if module_type == "ESM": ...
+      else:
+        Writer.write_src(f"""module.exports = {{
+  name: '{eventfile}',
+  once: {str(eventonce).lower()},
+  async execute(client) {{ }} // Add parameters for the event before the `client` parameter!
+}};
 """, eventpath)
 
   def __gen_dpy_event(self) -> None: print("To be supported...")

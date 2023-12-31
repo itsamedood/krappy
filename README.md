@@ -19,7 +19,7 @@
 # What libraries does it support?
 | Library | Supported |
 | --- | --- |
-| [Discord.JS](https://old.discordjs.dev/#/) | ❌ |
+| [Discord.JS](https://old.discordjs.dev/#/) | ✅ |
 | [Discord.py](https://discordpy.readthedocs.io/en/stable/) | ❌ |
 | [Pycord](https://docs.pycord.dev/en/stable/) | ❌ |
 | [Java Discord API](https://jda.wiki/introduction/jda/) | ❌ |
