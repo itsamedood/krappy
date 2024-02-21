@@ -59,7 +59,7 @@ export default class {eventname} extends Event {{
 }}
 """, eventpath)
     else:  # JavaScript.
-      if module_type == "ESM": ...
+      if module_type == "ES": ...
       else:
         Writer.write_src(f"""module.exports = {{
   name: '{eventfile}',

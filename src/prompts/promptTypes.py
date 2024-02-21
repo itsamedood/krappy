@@ -6,6 +6,7 @@ class ActionChoice(Enum):
   GEN_PROJECT = "Generate Project"
   GEN_COMMAND = "Generate Command"
   GEN_EVENT   = "Generate Event"
+  EXIT        = "Nothing"
 
 
 class Action:

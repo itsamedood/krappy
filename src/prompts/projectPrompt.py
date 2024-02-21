@@ -104,10 +104,10 @@ class ProjectPrompt:
 
     # CommonJS or ES modules (only if lang is JS).
     if language["language"] == "JavaScript":
-      module_type: dict[str, str] | None = prompt([List("module_type", message="Module", choices=["CommonJS", "ESM"], carousel=True)])
+      module_type: dict[str, str] | None = prompt([List("module_type", message="Module", choices=["CommonJS", "ES"], carousel=True)])
       if module_type is None: raise KrappyError("need module type", 1)
       else: options |= module_type
-    else: options["module_type"] = "ESM"
+    else: options["module_type"] = "ES"
 
     return options
 

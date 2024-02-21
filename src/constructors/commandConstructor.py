@@ -65,7 +65,7 @@ export default class {cmdname} extends Command {{
 """, cmdpath)
 
     else: # JavaScript.
-      if module_type == "ESM": ...
+      if module_type == "ES": ...
       else:
         Writer.write_src(f"""const {{ SlashCommandBuilder }} = require("discord.js");
 

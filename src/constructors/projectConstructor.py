@@ -44,6 +44,7 @@ class ProjectConstructor:
 
     path = str(options["path"]).replace('\\', '/')  # Windows moment...
     lang = str(options["language"])
+    module_type = str(options["module_type"])
     intents, partials = options["intents"], options["partials"]
     if not type(intents) == list or not type(partials) == list: raise KrappyError("intents and partials should each be of type 'list[str]'", 1)
 
@@ -69,6 +70,7 @@ CLIENT_ID={options["clientid"]}
   "name": "{options["name"]}",
   "version": "1.0.0",
   "description": "Generated with Krappy :)",
+  "type": "{"module" if module_type == "ES" else "commonjs"}",
   "main": "src/index.{lang}",
   "scripts": {{
     {""""test": "echo \\"Error: no test specified\\" && exit 1\"""" if lang == "js" else """"start": "npx ts-node src/index.ts",\n"dev": "npx ts-node-dev@2.0.0-0 src/index.ts\""""}
@@ -509,8 +511,23 @@ export default class PingCommand extends Command {{
       mkdir("%s/src/functions" %path)
       module_type = str(options["module_type"])
 
-      if module_type == "ESM":  # (🔥)
-        print("To be supported..."); exit(0)
+      if module_type == "ES":  # (🔥)
+        # `src/functions/handleCommands.js`
+        Writer.write_src(f"""
+export default (client) => {{
+  client.handleCommands = async () => {{
+    const commandFiles = await glob(`${{__dirname}}/commands/**/*.js`, {{ absolute: true }});
+
+    for (const file of commandFiles) {{
+      /* ... */
+    }}
+  }}
+}};
+""", "%s/src/functions/handleCommands.js" %path)
+
+        # `src/index.js`
+        Writer.write_src(f"""import {{ config }} from 'dotenv'; config();
+""", "%s/src/index.js" %path)
 
       else:  # CommonJS (require/exports / 🗑️)
         # `src/functions/handleCommands.js`
@@ -550,9 +567,7 @@ module.exports = (client) => {{
 """, "%s/src/functions/handleCommands.js" %path)
 
         # `src//functions/handleEvents.js`
-        Writer.write_src(f"""const {{ REST }} = require('@discordjs/rest');
-const {{ Routes }} = require('discord-api-types/v9');
-const {{ readdirSync }} = require('fs');
+        Writer.write_src(f"""const {{ readdirSync }} = require('fs');
 
 module.exports = (client) => {{
   client.handleEvents = async () => {{
