@@ -314,7 +314,7 @@ export default class Bot extends Client {{
   }}
 
   public async registerCommands(): Promise<void> {{
-    const cmdFiles = await glob(`${{__dirname}}/commands/**/*.ts`, {{ absolute: true }});
+    const cmdFiles = await glob(`${{{"__dirname" if pm != JSPackageManager.BUN else "import.meta.dir"}}}/commands/**/*.ts`, {{ absolute: true }});
 
     for (const file of cmdFiles) {{
       const {{ default: Command }} = await import(file);
@@ -326,7 +326,7 @@ export default class Bot extends Client {{
       console.log(`Loaded ${{command.data.name}} command!`);
     }}
 
-    {"const clientId = process.env['CLIENT_ID'] ?? '';\nconst guildId = process.env['GUILD_ID'] ?? '';" if "guildId" in options else "const clientId = process.env['CLIENT_ID'] ?? '';"}
+    const clientId = process.env['CLIENT_ID'] ?? '';{"\nconst guildId = process.env['GUILD_ID'] ?? '';" if "guildId" in options else ''}
     const rest = new REST({{ version: '9' }}).setToken(process.env['TOKEN'] ?? '');
 
     (async (): Promise<void> => {{
@@ -347,7 +347,7 @@ export default class Bot extends Client {{
   }}
 
   public async registerEvents(): Promise<void> {{
-    const eventFiles = await glob(`${{__dirname}}/events/**/*.ts`, {{ absolute: true }});
+    const eventFiles = await glob(`${{{"__dirname" if pm != JSPackageManager.BUN else "import.meta.dir"}}}/events/**/*.ts`, {{ absolute: true }});
 
     for (const file of eventFiles) {{
       const {{ default: Event }} = await import(file);
@@ -361,7 +361,7 @@ export default class Bot extends Client {{
   }}
 
   public async registerButtons(): Promise<void> {{
-    const buttonFiles = await glob(`${{__dirname}}/components/buttons/**/*.ts`, {{ absolute: true }});
+    const buttonFiles = await glob(`${{{"__dirname" if pm != JSPackageManager.BUN else "import.meta.dir"}}}/components/buttons/**/*.ts`, {{ absolute: true }});
 
     for (const file of buttonFiles) {{
       const {{ default: Button }} = await import(file);
@@ -373,7 +373,7 @@ export default class Bot extends Client {{
   }}
 
   public async registerSelectMenus(): Promise<void> {{
-    const selectMenuFiles = await glob(`${{__dirname}}/components/menus/**/*.ts`, {{ absolute: true }});
+    const selectMenuFiles = await glob(`${{{"__dirname" if pm != JSPackageManager.BUN else "import.meta.dir"}}}/components/menus/**/*.ts`, {{ absolute: true }});
 
     for (const file of selectMenuFiles) {{
       const {{ default: SelectMenu }} = await import(file);
@@ -385,7 +385,7 @@ export default class Bot extends Client {{
   }}
 
   public async registerModals(): Promise<void> {{
-    const modalFiles = await glob(`${{__dirname}}/components/modals/**/*.ts`, {{ absolute: true }});
+    const modalFiles = await glob(`${{{"__dirname" if pm != JSPackageManager.BUN else "import.meta.dir"}}}/components/modals/**/*.ts`, {{ absolute: true }});
 
     for (const file of modalFiles) {{
       const {{ default: Modal }} = await import(file);
@@ -516,11 +516,34 @@ export default class PingCommand extends Command {{
         Writer.write_src(f"""
 export default (client) => {{
   client.handleCommands = async () => {{
-    const commandFiles = await glob(`${{__dirname}}/commands/**/*.js`, {{ absolute: true }});
+    const cmdJSONArray = [];
+    const cmdFiles = await glob(`${{{"__dirname" if pm != JSPackageManager.BUN else "import.meta.dir"}}}/commands/**/*.js`, {{ absolute: true }});
 
-    for (const file of commandFiles) {{
-      /* ... */
+    for (const file of cmdFiles) {{
+      const command = await import(file);
+
+      client.commands.set(command.data.name, command);
+      cmdJSONArray.push(command.data);
     }}
+
+    const clientId = process.env['CLIENT_ID'] ?? '';{"\nconst guildId = process.env['GUILD_ID'] ?? '';" if "guildId" in options else ''}
+    const rest = new REST({{ version: '9' }}).setToken(process.env['TOKEN'] ?? '');
+
+    (async () => {{
+      try {{
+        console.log(`Started refreshing ${{cmdFiles.length}} application (/) commands.`);
+
+        const data = await rest.put(
+          {"Routes.applicationGuildCommands(clientId, guildId)" if "guildId" in options else "Routes.applicationCommands(clientId)"},
+          {{ body: cmdJSONArray }}
+        );
+
+        console.log(`Successfully reloaded ${{data.length}} application (/) commands!`);
+      }} catch (err) {{
+        console.log('Failed to refresh application commands.');
+        return console.error(err);
+      }}
+    }})();
   }}
 }};
 """, "%s/src/functions/handleCommands.js" %path)
